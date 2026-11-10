@@ -109,6 +109,10 @@ HICACHE_RATIO="${HICACHE_RATIO:-}"
 HICACHE_MAMBA_HOST_RATIO="${HICACHE_MAMBA_HOST_RATIO:-}"
 HICACHE_GTT_BUDGET="${HICACHE_GTT_BUDGET:-0.85}"
 TTM_SHIM="${TTM_SHIM:-auto}"
+# reasoning_effort "medium": the image passes it to the tokenizer, which only
+# knows low/high/max (HTTP 500). auto = remap to high unless the checkpoint
+# accepts medium. low | high | max | off.
+MEDIUM_EFFORT="${MEDIUM_EFFORT:-auto}"
 
 # ── Engine knobs: EMPTY = the profile's value from the verified recipe ──────
 CONTEXT_LEN="${CONTEXT_LEN:-}"
@@ -1256,6 +1260,32 @@ if [[ "$USE_HICACHE" == "on" && "$TTM_SHIM" == "auto" ]]; then
     fi
 fi
 
+# ── reasoning_effort "medium" shim ─────────────────────────────────────────
+# The pinned image (sglang de0f4918) forwards reasoning_effort="medium" to the
+# chat template as a native K3.1 tier, but the pinned checkpoint's tokenizer
+# (encoding_k3.py) only accepts low/high/max and asserts. Most OpenAI-style agent
+# clients send "medium" by default, so every agent turn got HTTP 500 (hit
+# 11 Nov 2026 with a laptop client). shims/sitecustomize.py remaps it at import.
+effort_args=()
+medium_effort="$MEDIUM_EFFORT"
+if [[ "$medium_effort" == "auto" ]]; then
+    medium_effort="high"
+    enc="$(ls "$MODEL_PATH"/encoding_k3*.py 2>/dev/null | head -1 || true)"
+    if [[ -n "$enc" ]] && grep -E '^_VALID_THINKING_EFFORTS' "$enc" | grep -q '"medium"'; then
+        medium_effort="off"
+    fi
+fi
+case "$medium_effort" in
+    off) log "reasoning_effort 'medium': passed through (MEDIUM_EFFORT=$MEDIUM_EFFORT)." ;;
+    low|high|max)
+        [[ -f "$SCRIPT_DIR/shims/sitecustomize.py" ]] || die "shims/sitecustomize.py missing (needed for MEDIUM_EFFORT=$medium_effort; set MEDIUM_EFFORT=off to skip)."
+        effort_args=(--bind "$SCRIPT_DIR/shims":/opt/k31-shims
+                     --env PYTHONPATH=/opt/k31-shims
+                     --env K31_MEDIUM_EFFORT="$medium_effort")
+        log "reasoning_effort 'medium' -> '$medium_effort' (the checkpoint's tokenizer has no medium tier)." ;;
+    *) die "MEDIUM_EFFORT must be auto, low, high, max or off (got '$MEDIUM_EFFORT')." ;;
+esac
+
 gpu_env=()
 for v in ROCR_VISIBLE_DEVICES HIP_VISIBLE_DEVICES CUDA_VISIBLE_DEVICES; do
     val="${!v:-}"; [[ -z "$val" ]] && continue
@@ -1272,6 +1302,7 @@ base_args=(--bind "$MODEL_CACHE_DIR":"$MODEL_CACHE_DIR"
     ${shim_args[@]+"${shim_args[@]}"}
     ${presharded_bind[@]+"${presharded_bind[@]}"}
     ${ttm_args[@]+"${ttm_args[@]}"}
+    ${effort_args[@]+"${effort_args[@]}"}
     --bind "$SGLANG_CACHE_DIR":"$SGLANG_CACHE_DIR"
     --env SGLANG_CACHE_DIR="$SGLANG_CACHE_DIR"
     --env HF_HOME="$MODEL_CACHE_DIR"

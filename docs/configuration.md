@@ -56,6 +56,7 @@ startup.
 | `HICACHE_RATIO` | scaled (1.5 on bun159) | Explicit `--hicache-ratio` |
 | `HICACHE_MAMBA_HOST_RATIO` | scaled (6 on bun159) | Explicit KDA host-pool ratio |
 | `TTM_SHIM` | auto | Binds the real GTT page limit over `/sys/module/ttm/parameters/pages_limit` when the host reports 0. SGLang reads that file for its HiCache budget; without the shim every HiCache launch fails on Bunya |
+| `MEDIUM_EFFORT` | auto | Remaps `reasoning_effort: "medium"` to `high`. The image forwards medium to the tokenizer as a K3.1 tier, but the pinned checkpoint only accepts `low`/`high`/`max`, so clients that default to medium (most agent clients) get HTTP 500. `auto` turns it off when the checkpoint gains a medium tier; `low`/`high`/`max` choose the target; `off` passes medium through |
 
 The launcher prints an estimate of pinned GiB and warns when it approaches the
 GTT limit or the job's `--mem`. If startup fails in `hipHostMalloc`, lower the

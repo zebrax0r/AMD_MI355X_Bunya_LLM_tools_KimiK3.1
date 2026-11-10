@@ -50,6 +50,7 @@ export HICACHE_RATIO="${HICACHE_RATIO:-}"             # empty: sized from node G
 export HICACHE_MAMBA_HOST_RATIO="${HICACHE_MAMBA_HOST_RATIO:-}"
 export HICACHE_GTT_BUDGET="${HICACHE_GTT_BUDGET:-0.85}"
 export TTM_SHIM="${TTM_SHIM:-auto}"                   # bind real GTT over ttm pages_limit=0 (SGLang HiCache budget)
+export MEDIUM_EFFORT="${MEDIUM_EFFORT:-auto}"         # reasoning_effort "medium" -> high (tokenizer has no medium tier); low|high|max|off
 
 # ── Engine overrides (empty = recipe value) ─────────────────────────────────
 export CONTEXT_LEN="${CONTEXT_LEN:-}"                 # empty: model max (1,048,576)

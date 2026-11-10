@@ -278,6 +278,58 @@ class StressTests(unittest.TestCase):
                 self.assertEqual(run_stress(outcome)[0], status)
 
 
+class MediumEffortShimTests(unittest.TestCase):
+    """shims/sitecustomize.py remaps reasoning_effort 'medium' (HTTP 500 otherwise)."""
+
+    FAKE = (
+        "_KIMI_K3_EFFORT_TIERS = {'minimal': 'low', 'low': 'low', 'medium': 'high',"
+        " 'high': 'high', 'xhigh': 'max', 'max': 'max'}\n"
+        "_KIMI_K31_EFFORT_TIERS = {**_KIMI_K3_EFFORT_TIERS, 'medium': 'medium'}\n"
+    )
+
+    def run_fake(self, effort):
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = Path(tmp, "sglang", "srt", "entrypoints", "openai")
+            pkg.mkdir(parents=True)
+            for d in [pkg, *pkg.parents]:
+                if d == Path(tmp):
+                    break
+                (d / "__init__.py").touch()
+            (pkg / "serving_chat.py").write_text(self.FAKE)
+            env = {"PATH": os.environ.get("PATH", os.defpath),
+                   "PYTHONPATH": f"{ROOT / 'shims'}{os.pathsep}{tmp}"}
+            if effort is not None:
+                env["K31_MEDIUM_EFFORT"] = effort
+            code = ("import sglang.srt.entrypoints.openai.serving_chat as m;"
+                    "print(m._KIMI_K31_EFFORT_TIERS['medium'], m._KIMI_K3_EFFORT_TIERS['medium'])")
+            r = subprocess.run([sys.executable, "-c", code], env=env, cwd=tmp,
+                               capture_output=True, text=True, timeout=60)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            return r.stdout.split(), r.stderr
+
+    def test_remaps_medium_to_high(self):
+        (k31, k3), err = self.run_fake("high")
+        self.assertEqual((k31, k3), ("high", "high"))
+        self.assertIn("[k31 shim]", err)
+
+    def test_inactive_without_env_or_off(self):
+        for effort in (None, "off"):
+            (k31, _), err = self.run_fake(effort)
+            self.assertEqual(k31, "medium")
+            self.assertNotIn("[k31 shim] reasoning_effort", err)
+
+    def test_rejects_unknown_target(self):
+        (k31, _), err = self.run_fake("medium")
+        self.assertEqual(k31, "medium")
+        self.assertIn("ignoring", err)
+
+    def test_launcher_binds_shim(self):
+        text = SERVE.read_text()
+        self.assertIn('MEDIUM_EFFORT="${MEDIUM_EFFORT:-auto}"', text)
+        self.assertIn('--env PYTHONPATH=/opt/k31-shims', text)
+        self.assertIn('${effort_args[@]+"${effort_args[@]}"}', text)
+
+
 class SyntaxAndDocsTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("bash"), "bash required")
     def test_shell_syntax(self):

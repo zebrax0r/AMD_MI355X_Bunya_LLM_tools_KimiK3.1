@@ -74,9 +74,14 @@ the K3 repo was stuck (decode cost at 100k).
    (DFLASH or DSpark, ReplaySSM, 6 or 8 draft tokens). With `SPECULATIVE=none`
    or another block size the launcher turns it off instead of letting SGLang
    refuse to start.
-7. **`status` reports** whether the monokernel engaged (`[k31 wide] first wide
+7. **`reasoning_effort: "medium"` remap.** The pinned image treats medium as a
+   native K3.1 tier, but the pinned checkpoint's tokenizer only accepts
+   low/high/max and asserts, so clients that default to medium got HTTP 500
+   on every turn. `shims/sitecustomize.py` (bound in by the launcher) maps
+   medium to high, as SGLang does for K3 (`MEDIUM_EFFORT`).
+8. **`status` reports** whether the monokernel engaged (`[k31 wide] first wide
    step`) and the recent DFLASH accept length.
-8. Caches, logs, PID and API key use `k31` names, so K3 and K3.1 can share one
+9. Caches, logs, PID and API key use `k31` names, so K3 and K3.1 can share one
    `MODEL_CACHE_DIR`. The sbatch wrapper uses `SLURM_SUBMIT_DIR` (the K3
    wrapper's spool-directory caveat is fixed).
 
