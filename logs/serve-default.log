@@ -1,0 +1,47 @@
+[1;34m[kimik31][0m Loaded config from /scratch/user/uqjcarr1/builds/AMD_MI355X_Bunya_LLM_tools_KimiK3.1/kimik31.env
+[1;34m[kimik31][0m Weights: moonshotai/Kimi-K3.1-Pro -> d9e99b0792a5e93b78ea9bea62a68167e36ddd9e (96 shards)
+[1;34m[kimik31][0m Draft:   RadixArk/Kimi-K3.1-Dflash2-Preview -> ea257b38a8ee755b65287bb8ccd0938b519ce26b (trained block 5, serving block 6, YaRN x32.0)
+[1;34m[kimik31][0m Detected gfx950 (MI350X/MI355X).
+[1;34m[kimik31][0m ROCm: node 10.1.0 / container 10.0.0
+[1;34m[kimik31][0m Using API key from /scratch/user/uqjcarr1/models/kimik31-api-key
+[1;34m[kimik31][0m Recipe: profile=lowlatency agents=4 tp=8 mono=1 hicache=off spec=dflash(block 6, block-verify) max-running=4 ctx=model max (1M)
+[1;33m[kimik31 WARN][0m These recipe env vars are never read by this image (inert): SGLANG_AMD_MONO_K31_WIDE
+[1;34m[kimik31][0m GPU passthrough: rocm (remembered for this node+image; delete /scratch/user/uqjcarr1/models/.rocm-mode-k31 to re-probe)
+[1;34m[kimik31][0m Preflight OK: /sgl-workspace/aiter/aiter/jit is writable in the container.
+[1;34m[kimik31][0m Starting SGLang: moonshotai/Kimi-K3.1-Pro  (profile=lowlatency agents=4 tp=8 mono=1 hicache=off spec=dflash(block 6, block-verify) max-running=4 ctx=model max (1M))
+[1;34m[kimik31][0m Image: /scratch/user/uqjcarr1/models/kimik31-dev-mi35x-5901db14.sif
+[1;34m[kimik31][0m Logs:  /scratch/user/uqjcarr1/models/kimik31-server.log
+[1;34m[kimik31][0m Waiting for the server to become healthy (timeout 14400s).
+[1;34m[kimik31][0m A cold start reads ~1.5 TB off scratch, then captures prefill + decode graphs.
+[1;34m[kimik31][0m Ready in 1101s (1.42 GB/s effective over 1561 GB)
+
+============================================================================
+  kimi-k3.1-pro is up and serving on Bunya's MI355X.
+
+  Model:       moonshotai/Kimi-K3.1-Pro @ d9e99b07
+  Recipe:      profile=lowlatency agents=4 tp=8 mono=1 hicache=off spec=dflash(block 6, block-verify) max-running=4 ctx=model max (1M)
+  Node:        bun159     (job 32531217)
+  Endpoint:    http://bun159:30000/v1   (OpenAI-compatible)
+  Model name:  kimi-k3.1-pro
+  API key:     /scratch/user/uqjcarr1/models/kimik31-api-key
+               export KIMIK31_API_KEY="$(cat /scratch/user/uqjcarr1/models/kimik31-api-key)"
+
+  K3.1 always thinks. Set depth per request with the top-level field
+  "reasoning_effort": "low" | "high" | "max" (default max), and pass the whole
+  assistant message (reasoning_content + tool_calls) back on the next turn.
+
+  Verify:      ./serve-kimik31.sh toolcheck
+               ./serve-kimik31.sh status     (monokernel engaged? DFLASH accept len)
+  Second shell into this job:
+               srun --overlap --jobid 32531217 --pty /bin/bash -l
+  From your laptop:
+               ssh -N -L 30000:bun159:30000 ${USER}@bunya1.rcc.uq.edu.au
+  Clients:     ./opencode-setup.sh --host bun159 --port 30000
+               ./kimicode-setup.sh --host bun159 --port 30000
+  Benchmark:   ./bench-kimik31.sh sweep      ./agentstress.py (real agentic shape)
+
+  Stop with Ctrl-C, 'scancel 32531217', or './serve-kimik31.sh stop'.
+============================================================================
+
+[1;34m[kimik31][0m Detached. The server keeps running on this node until 'stop' or the job ends.
+[1;34m[kimik31][0m   Logs:  tail -f /scratch/user/uqjcarr1/models/kimik31-server.log

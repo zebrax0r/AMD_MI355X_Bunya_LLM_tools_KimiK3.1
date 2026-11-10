@@ -1,0 +1,101 @@
+# Configuration for serve-kimik31.sh on Bunya's MI355X — copy to kimik31.env and edit.
+#
+#   cp -n kimik31-env.example kimik31.env && chmod 600 kimik31.env
+#
+# Every value uses ${VAR:-default}, so anything exported in your shell (or an
+# sbatch --export) wins. Most users only edit MODEL_CACHE_DIR, HF_TOKEN_FILE and
+# AGENTS. EMPTY engine knobs mean "the verified upstream recipe value for the
+# selected profile" — see docs/configuration.md and './serve-kimik31.sh plan'.
+
+# ── Required ────────────────────────────────────────────────────────────────
+# Scratch path for the HF cache, .sif, API key, server log/PID (~1.6 TB weights
+# + ~30 GB image + 6 GB draft). /scratch, never /home.
+export MODEL_CACHE_DIR="${MODEL_CACHE_DIR:-}"
+# HF token: prefer a mode-600 file holding only the token.
+export HF_TOKEN="${HF_TOKEN:-}"
+export HF_TOKEN_FILE="${HF_TOKEN_FILE:-}"
+
+# ── Model, draft and image pins ─────────────────────────────────────────────
+export MODEL_ID="${MODEL_ID:-moonshotai/Kimi-K3.1-Pro}"
+export MODEL_REVISION="${MODEL_REVISION:-d9e99b0792a5e93b78ea9bea62a68167e36ddd9e}"
+export SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-kimi-k3.1-pro}"
+export SGLANG_IMAGE="${SGLANG_IMAGE:-docker://lmsysorg/sglang@sha256:5901db1401ad7b8bc62ac67175f6f013b1b868e2a2dab063ee8848e7290fa9a7}"
+export SIF_PATH="${SIF_PATH:-}"                       # default $MODEL_CACHE_DIR/kimik31-mi355x.sif
+export APPTAINER_CACHEDIR="${APPTAINER_CACHEDIR:-}"   # default beside MODEL_CACHE_DIR
+export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-}"
+export SGLANG_CACHE_DIR="${SGLANG_CACHE_DIR:-}"       # default $MODEL_CACHE_DIR/sglang-cache-k31
+export AITER_JIT_DIR="${AITER_JIT_DIR:-}"             # default $MODEL_CACHE_DIR/aiter-jit-k31
+export AITER_JIT_TARGET="${AITER_JIT_TARGET:-}"       # auto-detected in-image aiter/jit
+export AITER_CONFIG_DIR="${AITER_CONFIG_DIR:-}"       # default per-job under $MODEL_CACHE_DIR/aiter-configs
+
+# ── Endpoint ────────────────────────────────────────────────────────────────
+export KIMIK31_API_KEY="${KIMIK31_API_KEY:-}"         # empty: generated once, kept in $MODEL_CACHE_DIR/kimik31-api-key
+export PORT="${PORT:-30000}"
+export TP_SIZE="${TP_SIZE:-8}"
+
+# ── Recipe selection (upstream's verified MI355X AgentX recipes) ────────────
+# AGENTS = concurrent agent sessions you plan to run.
+#   1-4 lowlatency (TP8 + AMD monokernel)    5-8 mono-dcp8 (TP8·DCP8 + monokernel)
+#   9-32 throughput (DCP8 + HiCache)         33-56 throughput-wide
+export AGENTS="${AGENTS:-4}"
+export PROFILE="${PROFILE:-auto}"                     # or force one of the four names above
+export SPECULATIVE="${SPECULATIVE-dflash}"            # dflash | none
+export DFLASH_MODEL="${DFLASH_MODEL:-RadixArk/Kimi-K3.1-Dflash2-Preview}"
+export DFLASH_REVISION="${DFLASH_REVISION:-ea257b38a8ee755b65287bb8ccd0938b519ce26b}"
+export DFLASH_BLOCK_SIZE="${DFLASH_BLOCK_SIZE:-}"     # empty: 6 (5 for throughput-wide)
+export BLOCK_VERIFY="${BLOCK_VERIFY:-1}"              # --speculative-use-block-verification
+export MONOKERNEL="${MONOKERNEL:-auto}"               # auto | 0 | 1
+export HICACHE="${HICACHE:-auto}"                     # auto | on | off
+export HICACHE_RATIO="${HICACHE_RATIO:-}"             # empty: sized from node GTT
+export HICACHE_MAMBA_HOST_RATIO="${HICACHE_MAMBA_HOST_RATIO:-}"
+export HICACHE_GTT_BUDGET="${HICACHE_GTT_BUDGET:-0.85}"
+export TTM_SHIM="${TTM_SHIM:-auto}"                   # bind real GTT over ttm pages_limit=0 (SGLang HiCache budget)
+
+# ── Engine overrides (empty = recipe value) ─────────────────────────────────
+export CONTEXT_LEN="${CONTEXT_LEN:-}"                 # empty: model max (1,048,576)
+export MEM_FRACTION="${MEM_FRACTION:-}"               # 0.85; upstream saw 0.87+ overflow GTT
+export MAX_RUNNING_REQUESTS="${MAX_RUNNING_REQUESTS:-}"
+export CUDA_GRAPH_MAX_BS_DECODE="${CUDA_GRAPH_MAX_BS_DECODE:-}"
+export CHUNKED_PREFILL_SIZE="${CHUNKED_PREFILL_SIZE:-}"
+export PREFILL_DECODE_INTERVAL="${PREFILL_DECODE_INTERVAL:-}"
+export SCHEDULE_POLICY="${SCHEDULE_POLICY:-}"         # lpm
+export MAX_MAMBA_CACHE_SIZE="${MAX_MAMBA_CACHE_SIZE:-}"
+export MAMBA_FULL_MEMORY_RATIO="${MAMBA_FULL_MEMORY_RATIO:-}"
+export MAMBA_RADIX_STRATEGY="${MAMBA_RADIX_STRATEGY:-}"
+export ROCM_RUNTIME_RESERVE_GB="${ROCM_RUNTIME_RESERVE_GB:-}"
+export DISABLE_RADIX_CACHE="${DISABLE_RADIX_CACHE:-0}"
+export KV_CACHE_DTYPE="${KV_CACHE_DTYPE:-}"           # K3.1 forces fp8_e4m3; anything else is rejected
+export TOOL_PARSER="${TOOL_PARSER:-kimi_k3}"
+export REASONING_PARSER="${REASONING_PARSER:-kimi_k3}"
+export ENABLE_METRICS="${ENABLE_METRICS:-1}"
+export STREAM_INTERVAL="${STREAM_INTERVAL:-1}"
+export HSA_NO_SCRATCH_RECLAIM="${HSA_NO_SCRATCH_RECLAIM:-}"   # empty: the image's own value (1)
+
+# ── ROCm / container plumbing (carried over from the K3 repo) ───────────────
+export ENABLE_AITER="${ENABLE_AITER:-1}"
+export FLYDSL_FORCE="${FLYDSL_FORCE:-1}"
+export ROCM_MODE="${ROCM_MODE:-auto}"
+export AITER_GPU_ARCHS="${AITER_GPU_ARCHS:-}"
+export ROCMINFO_SHIM="${ROCMINFO_SHIM:-auto}"
+export SET_CPU_AFFINITY="${SET_CPU_AFFINITY:-0}"
+export READY_TIMEOUT="${READY_TIMEOUT:-14400}"
+
+# ── Weight loading ──────────────────────────────────────────────────────────
+export WEIGHT_LOAD_THREADS="${WEIGHT_LOAD_THREADS:-}"         # empty: upstream's multithread default
+export LOAD_FORMAT="${LOAD_FORMAT:-}"                         # presharded = opt-in A/B, +1.5 TB
+export PRESHARDED_PATH="${PRESHARDED_PATH:-}"
+export PREFETCH_BLOCK_SIZE_MB="${PREFETCH_BLOCK_SIZE_MB:-}"
+export PREFETCH_CHECKPOINTS="${PREFETCH_CHECKPOINTS:-1}"
+
+# ── Escape hatches ──────────────────────────────────────────────────────────
+export LAUNCH_CMD="${LAUNCH_CMD:-sglang serve}"
+export EXTRA_ENGINE_ARGS="${EXTRA_ENGINE_ARGS:-}"
+export EXTRA_ENV="${EXTRA_ENV:-}"                     # space-separated NAME=VALUE into the container
+
+# ── Benchmark defaults (bench-kimik31.sh) ───────────────────────────────────
+export BENCH_INPUT_LEN="${BENCH_INPUT_LEN:-1024}"
+export BENCH_OUTPUT_LEN="${BENCH_OUTPUT_LEN:-512}"
+export BENCH_NUM_PROMPTS="${BENCH_NUM_PROMPTS:-200}"
+export BENCH_CONCURRENCY="${BENCH_CONCURRENCY:-1 2 4}"
+export BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-4}"
+export BENCH_EXTRA_ARGS="${BENCH_EXTRA_ARGS:-}"

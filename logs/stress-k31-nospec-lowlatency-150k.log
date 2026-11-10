@@ -1,0 +1,12 @@
+agentstress: model=kimi-k3.1-pro effort=low max_ctx~150000 turn~20000
+turn  1 ~ 20k  ttft   1.3s total   5.1s   288 tok  75.3 tok/s cached 0/20666  ok  reply='The deployment ticket is **574354-saffro'
+turn  2 ~ 40k  ttft   1.1s total   4.2s   234 tok  75.0 tok/s cached 20736/41294  ok  reply='The deployment ticket is **214344-amber*'
+turn  3 ~ 60k  ttft   1.2s total   3.9s   206 tok  75.0 tok/s cached 41472/62287  ok  reply='The deployment ticket is **645233-saffro'
+turn  4 ~ 80k  ttft   1.1s total   2.7s   120 tok  75.1 tok/s cached 62464/82596  ok  reply='The deployment ticket is **368973-violet'
+turn  5 ~100k  ttft   1.2s total   2.5s    99 tok  75.1 tok/s cached 82688/103093  ok  reply='The deployment ticket is **220530-cobalt'
+turn  6 ~120k  ttft   1.2s total   2.5s    96 tok  75.1 tok/s cached 103168/123821  ok  reply='The deployment ticket is **155355-violet'
+turn  7 ~140k  ttft   1.2s total   3.7s   185 tok  74.3 tok/s cached 123904/143889  ok  reply='The deployment ticket is **484192-amber*'
+turn  8 ~160k  ttft   1.2s total   3.2s   146 tok  74.4 tok/s cached 143872/164450  ok  reply='The deployment ticket is **518827-amber*'
+decode tok/s, context 0-60k: mean 75.1
+decode tok/s, context 60-120k: mean 75.1
+decode tok/s, context 120-160k: mean 74.3

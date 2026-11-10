@@ -1,0 +1,10 @@
+/usr/bin/bash: /opt/venv/lib/python3.12/site-packages/torch/lib/libtinfo.so.6: no version information available (required by /usr/bin/bash)
+/opt/venv/lib/python3.12/site-packages/huggingface_hub/constants.py:302: FutureWarning: The `HF_HUB_ENABLE_HF_TRANSFER` environment variable is deprecated as 'hf_transfer' is not used anymore. Please use `HF_XET_HIGH_PERFORMANCE` instead to enable high performance transfer with Xet. Visit https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfxethighperformance for more details.
+  warnings.warn(
+Hint: A new version of huggingface_hub (2.4.0) is available! You are using version 1.33.0.
+To update, run: hf update
+Hint: The `hf-cli` skill is not installed. Run `hf skills add -g` to teach your AI agents how to use the `hf` CLI.
+path=/scratch/user/uqjcarr1/models/hub/models--moonshotai--Kimi-K3.1-Pro/snapshots/d9e99b0792a5e93b78ea9bea62a68167e36ddd9e
+/opt/venv/lib/python3.12/site-packages/huggingface_hub/constants.py:302: FutureWarning: The `HF_HUB_ENABLE_HF_TRANSFER` environment variable is deprecated as 'hf_transfer' is not used anymore. Please use `HF_XET_HIGH_PERFORMANCE` instead to enable high performance transfer with Xet. Visit https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfxethighperformance for more details.
+  warnings.warn(
+path=/scratch/user/uqjcarr1/models/hub/models--RadixArk--Kimi-K3.1-Dflash2-Preview/snapshots/ea257b38a8ee755b65287bb8ccd0938b519ce26b
